@@ -1,4 +1,4 @@
-# sherline_lathe_wb
+# sherline_lathe
 CNC_TOOLBOX wb for UTA Fablab Sherline Lathe
 
 How to setup
