@@ -214,7 +214,7 @@ class sw_2_linuxCNC_formatter():
             self._insert_line('(MSG, warning G96 cmds not supported)', 0)
 
     def make_tool_tbl(self):
-        tool_tbl = []
+        tool_tbl = ''
         P = 1
         for x in self._file_contents:
             if x[1] == 'code' and 'T' in x[0]:
@@ -224,8 +224,9 @@ class sw_2_linuxCNC_formatter():
                 while '.' in tool:
                     tool.remove('.')
                 x[0] = ''.join(tool)
-                tool_tbl.append([''.join(tool), P])
-                P += 1
+                if x[0] not in tool_tbl:
+                    tool_tbl += f'{x[0]}, P{P} X+0.0 Z+0.0\n'
+                    P += 1
         return tool_tbl
 
     def get_text(self):

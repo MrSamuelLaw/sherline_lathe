@@ -98,22 +98,19 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
             pyperclip.copy(output)
 
     def generate_tool_table(self, text):
-        pass
-        # customized for the computer at work to over write
-        # the tool table file
-
-        # contents = self.text_area.toPlainText()
-        # formatter = sw_2_linuxCNC_formatter()
-        # crib = formatter.make_tool_tbl(contents)
-        # file_name = 'tool.tbl'
-        # browser = QFileDialog()
-        # browser.setFileMode(QFileDialog.DirectoryOnly)
-        # if browser.exec_():
-        #     folder = browser.selectedFiles()[0]
-        #     path = str(folder)+'/'+file_name
-        #     print(path)
-        #     with open(path, 'w') as f:
-        #         f.write(crib)
+        contents = self.text_area.toPlainText()
+        formatter = sw_2_linuxCNC_formatter()
+        formatter.load_contents(contents)
+        crib = formatter.make_tool_tbl()
+        file_name = 'tool.tbl'
+        browser = QFileDialog()
+        browser.setFileMode(QFileDialog.DirectoryOnly)
+        if browser.exec_():
+            folder = browser.selectedFiles()[0]
+            path = str(folder)+'/'+file_name
+            print(path)
+            with open(path, 'w') as f:
+                f.write(crib)
 
     def fpm_to_ipm(self):
         text = self.text_area.toPlainText()
