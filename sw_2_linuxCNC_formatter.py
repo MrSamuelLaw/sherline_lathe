@@ -32,6 +32,7 @@ class sw_2_linuxCNC_formatter():
         self.g = gscrape()
         self.g.add_comment_flag('round', [('(', -1), (')', 1)])
         self.g.add_comment_flag('semicolon_left', [(';', 0)])
+        self.g.add_comment_flag('eof', [('%', 0)])
 
     def format(self, contents, units, offset):
         self.load_contents(contents)
@@ -235,10 +236,10 @@ class sw_2_linuxCNC_formatter():
 
     def fpm_to_ipm(self, text):
         self._file_contents = self.g.sort_gcode(text)
+        print(self._file_contents[-1])
         for x in self._file_contents:
             if x[1] == 'code' and 'F' in x[0]:
                 feed = float(x[0][1:])  # convert to float
                 feed = 12 * feed  # convert fpm to ipm here
                 x[0] = 'F{0:.4f}'.format(feed)  # put back to
-        # return as text
         return self.g.to_text(self._file_contents)
