@@ -48,7 +48,7 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         if not self.number_checkbox.isChecked():
             contents = formatter.remove_line_numbers()
         self.text_area.clearText()
-        self.text_area.appendPlainText(contents.lstrip())
+        self.text_area.insertPlainText(contents.lstrip())
 
     def surface_script(self):
         # set up the form

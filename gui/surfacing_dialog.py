@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'c:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui',
-# licensing of 'c:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui' applies.
+# Form implementation generated from reading ui file 'c:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui',
+# licensing of 'c:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui' applies.
 #
-# Created: Mon Jan 27 19:34:42 2020
+# Created: Fri Jan 31 08:13:57 2020
 #      by: pyside2-uic  running on PySide2 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -60,8 +60,10 @@ class Ui_surfacing_Dialog(object):
 
     def retranslateUi(self, surfacing_Dialog):
         surfacing_Dialog.setWindowTitle(QtWidgets.QApplication.translate("surfacing_Dialog", "Surfacing_Dialog", None, -1))
-        self.depth_label.setText(QtWidgets.QApplication.translate("surfacing_Dialog", "depth", None, -1))
-        self.length_label.setText(QtWidgets.QApplication.translate("surfacing_Dialog", "length", None, -1))
+        self.depth_label.setText(QtWidgets.QApplication.translate("surfacing_Dialog", "depth\n"
+"[units]", None, -1))
+        self.length_label.setText(QtWidgets.QApplication.translate("surfacing_Dialog", "length\n"
+"[units]", None, -1))
         self.feed_label.setText(QtWidgets.QApplication.translate("surfacing_Dialog", "feed rate\n"
 "[units/min]", None, -1))
         self.rpm_label.setText(QtWidgets.QApplication.translate("surfacing_Dialog", "rpm", None, -1))

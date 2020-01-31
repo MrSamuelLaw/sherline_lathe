@@ -17,7 +17,8 @@
    <item row="0" column="0">
     <widget class="QLabel" name="depth_label">
      <property name="text">
-      <string>depth</string>
+      <string>depth
+[units]</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -30,7 +31,8 @@
    <item row="1" column="0">
     <widget class="QLabel" name="length_label">
      <property name="text">
-      <string>length</string>
+      <string>length
+[units]</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

@@ -20,6 +20,9 @@
       <string>feedrate
 [units/min]</string>
      </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
     </widget>
    </item>
    <item row="1" column="1">
@@ -34,12 +37,19 @@
       <string>surface speed
 [units/min]</string>
      </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
     </widget>
    </item>
    <item row="2" column="0">
     <widget class="QLabel" name="diameter_label">
      <property name="text">
-      <string>diameter</string>
+      <string>diameter
+[units]</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
@@ -50,6 +60,9 @@
     <widget class="QLabel" name="unit_label">
      <property name="text">
       <string>units</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
