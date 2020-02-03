@@ -226,7 +226,7 @@ class sw_2_linuxCNC_formatter():
                     tool.remove('.')
                 x[0] = ''.join(tool)
                 if x[0] not in tool_tbl:
-                    tool_tbl += f'{x[0]}, P{P} X+0.0 Z+0.0\n'
+                    tool_tbl += f'{x[0]}, P{P} X+0.0 Z+0.0;\n'
                     P += 1
         return tool_tbl
 
