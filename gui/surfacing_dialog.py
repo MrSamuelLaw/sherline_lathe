@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'c:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui',
 # licensing of 'c:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui' applies.
 #
-# Created: Mon Feb  3 13:13:27 2020
+# Created: Thu Feb 20 10:21:54 2020
 #      by: pyside2-uic  running on PySide2 5.13.0
 #
 # WARNING! All changes made in this file will be lost!

@@ -8,13 +8,7 @@ and edits them to be compatible with linuxCNC
 
 import os.path
 from gscrape import gscrape
-
-
-def d(msg, ovr=0):
-    if False:
-        print(msg)
-    elif ovr:
-        print(msg)
+import logging
 
 
 class sw_2_linuxCNC_formatter():
@@ -29,12 +23,23 @@ class sw_2_linuxCNC_formatter():
     _spindle_mode = 'G97'  # G97 is const rpm mode
 
     def __init__(self):
+        """
+        inits an instance of gscrape for gcode processing
+        and applies the appropriate comment flags
+        """
+
         self.g = gscrape()
         self.g.add_comment_flag('round', [('(', -1), (')', 1)])
         self.g.add_comment_flag('semicolon_left', [(';', 0)])
         self.g.add_comment_flag('eof', [('%', 0)])
 
     def format(self, contents, units, offset):
+        """
+        formats gcode from the text editor and
+        makes it compatible with linux cnc axis
+        controller for a sherline cnc lathe
+        """
+
         self.load_contents(contents)
         self.set_units(units)
         self.set_offset(offset)
@@ -48,43 +53,74 @@ class sw_2_linuxCNC_formatter():
         return self.get_text()
 
     def remove_line_numbers(self):
+        """
+        removes line numbers from the current
+        document using gscrape then reformats
+        as a string for text output
+        """
+
         self.remove_number_lines()
         return self.g.to_text(self._file_contents)
 
-    def ftmin_to_inmin(self):
-        pass
-
     def load_contents(self, contents):
+        """
+        takes text from the CNC_TOOLBOX text_area
+        and applies gscrape formatting for easy parsing
+        and editing
+        """
+
         self._file_contents = self.g.sort_gcode(contents)
 
     def set_units(self, units):
+        """
+        function call to set units for gcode file
+        """
         if units.lower() not in self._unit_dict.keys():
-            d("unit options are in or mm")
+            logging.debug("unit options are in or mm")
             return -1
         else:
             self._units = units.lower()
-            d("units set to {}".format(self._units))
+            logging.debug("units set to {}".format(self._units))
             return None
 
     def set_offset(self, offset="G54"):
-        pass
+        """
+        function to apply offset to gcode
+        defaults to G54
+        """
+
         if offset.upper() not in self._offset_list:
-            d("offset is not valid")
+            logging.info("offset is not valid")
             return -1
         else:
             self._offset = offset.upper()
             return None
 
-    def _in_text(self, code, text):
+    def _in_text(self, code, scraped_text):
+        """
+        code -> specific gcode to search for
+        scraped_text -> code that has been gscraped and will be searched
+
+        searches for code in scraped text and returns a list
+        if any results are present.
+        Will exclude comments
+        """
         code = list(code)
         result = []
         for c in code:
-            find = ([x for x in text if x[1] == 'code' and c in x[0]])
+            find = ([x for x in scraped_text if x[1] == 'code' and c in x[0]])
             if len(find):
                 result.append(find)
         return result
 
     def _insert_line(self, code, lnum):
+        """
+        code is the gcode you wish to add in string format
+        lnum is the line number you want to place it at
+
+        inserts a line of code at the specified line number
+        """
+
         # sort code to insert
         code = self.g.sort_gcode(code)
         # renumber code to insert
@@ -103,6 +139,12 @@ class sw_2_linuxCNC_formatter():
                 break
 
     def insert_safety_line(self):
+        """
+        ensures that every file has a safety line
+        that ensures, units, workoffset, and and spindle-modes
+        are set at the beginning of the file
+        """
+
         # define the current safety line
         if self._units and self._offset is not None:
             safety_line = self._unit_dict[self._units]+' '
@@ -130,6 +172,13 @@ class sw_2_linuxCNC_formatter():
             self._insert_line(safety_line, 1)
 
     def delete_B_commands(self):
+        """
+        removes B commands from gcode as linuxcnc
+        does not support B commands. B commands
+        are also a sign of solidworks file setup
+        errors if they are present.
+        """
+
         del_list = []
         for i, x in enumerate(self._file_contents):
             if x[1] == 'code' and 'B' in x[0]:
@@ -139,6 +188,12 @@ class sw_2_linuxCNC_formatter():
             del self._file_contents[d-i]
 
     def fix_T_commands(self):
+        """
+        fixes T commands found as decimals and
+        leading zeros as those formats cause errors
+        for linux cnc
+        """
+
         for i, x in enumerate(self._file_contents):
             if 'T' in x[0] and x[1] == 'code':
                 tool = list(x[0])
@@ -153,6 +208,13 @@ class sw_2_linuxCNC_formatter():
                     self._file_contents[i+1:i+1] = [swap, oset]
 
     def fix_eof(self):
+        """
+        makes sure that no more cmds are listed after an
+        end of file command then appends on a % sign which
+        is a specific end of file specifier necessary
+        for linux cnc
+        """
+
         for i, x in enumerate(self._file_contents):
             if x[1] == 'code' and x[0] in self._eof_list:
                 self._file_contents = self._file_contents[0:i+1]
@@ -160,6 +222,11 @@ class sw_2_linuxCNC_formatter():
                 self._file_contents.append(eof)
 
     def renumber_lines(self):
+        """
+        function to renumber lines correctly
+        after edits are made
+        """
+
         self.remove_number_lines()
         # load up each line
         line_dict = {}
@@ -185,6 +252,10 @@ class sw_2_linuxCNC_formatter():
             self._file_contents.extend(line_dict[k])
 
     def remove_number_lines(self):
+        """
+        Takes out all N cmds from a gcode script
+        """
+
         # find which items need to be deleted
         del_list = []
         for i, x in enumerate(self._file_contents):
@@ -195,6 +266,14 @@ class sw_2_linuxCNC_formatter():
             del self._file_contents[d-i]
 
     def fix_spindle_cmds(self):
+        """
+        adds a forced pause before S commands
+        and puts a (MSG, rpm) formatted message
+        that linux cnc will display on the screen
+        as the sherline rpms are set manually, not
+        by the code.
+        """
+
         # find the spindle commands
         for i, x in enumerate(self._file_contents):
             if x[1] == 'code' and 'S' in x[0]:
@@ -208,6 +287,12 @@ class sw_2_linuxCNC_formatter():
                     self._insert_line(msg, x[2])
 
     def insert_warnings(self):
+        """
+        command that checks for possible errors in gcode
+        that are non fatal, and puts a corresponding
+        warning at the top of the file.
+        """
+
         msg = '(MSG, warning G96 cmds not supported)'
         x = [x[0] for x in self._file_contents if x[1] == 'code']
         y = [x[0] for x in self._file_contents if x[1] == 'comment']
@@ -215,6 +300,12 @@ class sw_2_linuxCNC_formatter():
             self._insert_line('(MSG, warning G96 cmds not supported)', 0)
 
     def make_tool_tbl(self):
+        """
+        generates a linux cnc compatible tool
+        table file from the gcode and returns it
+        in text format
+        """
+
         tool_tbl = ''
         P = 1
         for x in self._file_contents:
@@ -226,20 +317,15 @@ class sw_2_linuxCNC_formatter():
                     tool.remove('.')
                 x[0] = ''.join(tool)
                 if x[0] not in tool_tbl:
-                    tool_tbl += f'{x[0]}, P{P} X+0.0 Z+0.0;\n'
+                    tool_tbl += f'{x[0]} P{P} X+0.0 Z+0.0;\n'
                     P += 1
         return tool_tbl
 
     def get_text(self):
+        """
+        converts code in gscrape format back into
+        text
+        """
+
         text = gscrape().to_text(self._file_contents)
         return text
-
-    def fpm_to_ipm(self, text):
-        self._file_contents = self.g.sort_gcode(text)
-        print(self._file_contents[-1])
-        for x in self._file_contents:
-            if x[1] == 'code' and 'F' in x[0]:
-                feed = float(x[0][1:])  # convert to float
-                feed = 12 * feed  # convert fpm to ipm here
-                x[0] = 'F{0:.4f}'.format(feed)  # put back to
-        return self.g.to_text(self._file_contents)

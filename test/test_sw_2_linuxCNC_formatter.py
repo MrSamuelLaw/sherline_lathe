@@ -123,15 +123,6 @@ class test_sw_2_linuxCNC_formatter(unittest.TestCase):
         if 'T101' in res:
             self.assertTrue(True)
 
-    def test_fpm_to_ipm(self):
-        my_l = sw_2_linuxCNC_formatter()
-        File = ("test\\nc_test_files\\"
-                "nc_no_edits.nc")
-        with open(File, 'r') as f:
-            File = f.read()
-        my_l.format(File, 'in', 'G54')
-        my_l.fpm_to_ipm(File)
-
 
 if __name__ == "__main__":
     unittest.main()

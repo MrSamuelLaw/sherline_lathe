@@ -7,9 +7,12 @@ runs test for local workbench
 import unittest
 import subprocess
 import os
+import logging
 
 
 def main():
+    # set loggin level
+    logging.basicConfig(level=logging.INFO)
     if True:
         loader = unittest.TestLoader()
         start_dir = os.getcwd() + '/test'
@@ -21,10 +24,13 @@ def main():
 
         print(result)
         if len(result.failures):
+            print('----failures----')
             for f in result.failures:
-                print('\n------------')
                 print(f)
-
+        if len(result.errors):
+            print('----errors----')
+            for e in result.errors:
+                print(e, '\n')
 
 
 if __name__ == "__main__":
