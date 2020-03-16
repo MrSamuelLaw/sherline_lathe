@@ -14,12 +14,32 @@ from wb.sherline_lathe.lathe_parting import lathe_parting
 from PySide2.QtWidgets import QFileDialog
 
 import pyperclip
+import logging
 
 
 class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
 
-    def run_integrated(self, parent):
+    def __init__(self):
+        """
+        set logger
+        """
 
+        self._logger = logging.getLogger('log')
+        self._logger.info('my_sherline_lathe_wb instantiated')
+
+    def __del__(self):
+        """
+        notify when self is deleted
+        """
+
+        self._logger.info('my_sherline_lathe_wb deleted')
+
+    def run_integrated(self, parent):
+        """
+        load frame to run inside parent
+        """
+
+        self._logger.info('getting sherline lathe wb ready for parent')
         self.load_parent_elments(parent)
         self.setupUi(self.frame)
 
@@ -35,6 +55,11 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         return self
 
     def format_file(self):
+        """
+        implement sw_to_linuxCNC_formatter
+        """
+
+        self._logger.info('formatting gcode to run on linuxCNC')
         # definition is from the sw2linuxcnc module
         contents = self.text_area.toPlainText()
         offset = str(self.offset_field.text()).rstrip()
@@ -50,6 +75,11 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         self.text_area.insertPlainText(contents.lstrip())
 
     def surface_script(self):
+        """
+        implement surfacing script using dialog box
+        """
+
+        self._logger.debug('launching surfacing dialog')
         # set up the form
         s = lathe_surfacing()
         dialog = QtWidgets.QDialog()
@@ -74,6 +104,11 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
             pyperclip.copy(output)
 
     def parting_script(self):
+        """
+        implement parting script using dialog box
+        """
+
+        self._logger.debug('launching parting dialog')
         # set up the form
         p = lathe_parting()
         dialog = QtWidgets.QDialog()
@@ -97,6 +132,11 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
             pyperclip.copy(output)
 
     def generate_tool_table(self, text):
+        """
+        generate linuxCNC tool table from gcode
+        """
+
+        self._logger.info('generating tool table')
         contents = self.text_area.toPlainText()
         formatter = sw_2_linuxCNC_formatter()
         formatter.load_contents(contents)
@@ -112,5 +152,10 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
                 f.write(crib)
 
     def load_parent_elments(self, parent):
+        """
+        get text_area and frame main window
+        """
+
+        self._logger.debug('loading pointers to parent elements')
         self.text_area = parent.text_area
         self.frame = parent.frame

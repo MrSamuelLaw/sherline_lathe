@@ -11,6 +11,10 @@ import logging
 
 
 def main():
+    """
+    run workbench unit tests
+    """
+
     # set loggin level
     logging.basicConfig(level=logging.INFO)
     if True:

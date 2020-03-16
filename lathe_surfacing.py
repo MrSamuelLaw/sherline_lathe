@@ -7,16 +7,13 @@ that zeros at the part surface
 
 
 import math
-
-
-def d(msg, ovr=0):
-    if False:
-        print(msg)
-    elif ovr:
-        print(msg)
+import logging
 
 
 class lathe_surfacing():
+    """
+    generates gcode for parting stock with lathe
+    """
 
     unit_dict = {"in": "G20", "mm": "G21"}
     _units = None
@@ -28,52 +25,86 @@ class lathe_surfacing():
     _feed = None
 
     def __init__(self):
-        pass
+        self._logger = logging.getLogger('log')
 
     def surface(self, units, depth, length, rpm, feed):
+        """
+        generate parting gcode using input parameters
+        """
+
+        self._logger.info('generating surfacing gcode')
         self._set_units(units)
         self._set_rpm(rpm)
         self._set_feed(feed)
         self._set_length(length)
         self._set_depth(depth)
         gcode = self._get_gcode()
+        self._logger.info('surfacing gcode generated successfully')
         return gcode
 
     def _set_units(self, units):
+        """
+        sets units
+        """
+
         if units.lower() not in self.unit_dict.keys():
-            d("unit options are in or mm")
+            self._logger.debug("unit options are in or mm")
         else:
             self._units = units.lower()
-            d("units set to {}".format(self._units))
+            self._logger.debug("units set to {}".format(self._units))
 
     def _set_depth(self, depth):
+        """
+        set surfacing total depth
+        """
+
         if self._units == 'mm':
             self._depth = depth/25.4
         elif self._units == 'in':
             self._depth = depth
         else:
             return "units not set"
+        self._logger.debug(f'depth set to {self._depth}')
 
     def _set_length(self, length):
+        """
+        set axial length of stock to surface
+        """
+
         if self._units == 'mm':
             self._length = length/25.4
         elif self._units == 'in':
             self._length = length
         else:
             return "units not set"
+        self._logger.debug(f'length set to {self._length}')
 
     def _set_rpm(self, rpm):
+        """
+        set rpm at which to perform surfacing
+        """
+
         self._rpm = rpm
+        self._logger.debug(f'rpm to to {self._rpm}')
 
     def _set_feed(self, feed):
+        """
+        set axial feedrate
+        """
+
         if self._units == 'mm':
             self._feed = feed/25.4
         elif self._units == 'in':
             self._feed = feed
         else:
             return "units not set"
+        self._logger.debug(f'axial feedrate set to {self._feed}')
 
     def _get_gcode(self):
+        """
+        generate gcode based on input parameters
+        """
+
         if self._units and self._length and self._depth is not None:
             # set the safety line for the script
             safty_line = ("{0} G55 {1} {2}".format(self.unit_dict[self._units],
@@ -108,4 +139,5 @@ class lathe_surfacing():
         # append the end of file lines
         gcode += self._eof_list[0] + ' (delete if not at end of of script)'
         gcode += '\n% (delete if not at end of script)\n'
+        self._logger.debug('surfacing gcode generated successfully')
         return gcode

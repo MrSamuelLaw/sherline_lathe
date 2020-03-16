@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
+
+import logging
 from math import pi, floor
 
 
-def d(msg, ovr=0):
-    if False:
-        print(msg)
-    elif ovr:
-        print(msg)
-
-
 class lathe_parting():
+    """
+    class used to generate parting scripts for lathes
+    that do not have constant sfm mode
+    """
 
     unit_dict = {"in": "G20", "mm": "G21"}
     units = None
@@ -21,7 +20,16 @@ class lathe_parting():
     _pass_depth = None
     _feed = None
 
+    def __init__(self):
+        self._logger = logging.getLogger('log')
+        self._logger.info('lathe parting')
+
     def part(self, unit, surface_speed, diameter, feedrate):
+        """
+        implement parting script
+        """
+        self._
+        logger.info('generating parting script')
         self._set_units(unit)
         self._set_surface_speed(surface_speed),
         self._set_diameter(diameter)
@@ -54,26 +62,39 @@ class lathe_parting():
         # append the end of file lines
         gcode += self._eof_list[0] + ' (delete if not at end of of script)'
         gcode += '\n% (delete if not at end of script)\n'
+        self._logger.info('finished generating parting script')
         return gcode
-        d(gcode)
 
     def _set_surface_speed(self, surface_speed):
+        """
+        set surface speed
+
+        used for calculating rpms
+        """
         self._surfspeed = surface_speed
+        self._logger.debug(f'set surface speed to {self._surfspeed}')
 
     def _set_units(self, units):
+        """
+        set units
+        """
         if units.lower() not in self.unit_dict.keys():
-            d("unit options are in or mm")
+            self._logger.debug("unit options are in or mm")
         else:
             self._units = units.lower()
-            d("units set to {}".format(self._units))
+            self._logger.debug(("units set to {}".format(self._units)))
 
     def _set_initial_feedrate(self, feed):
+        """
+        sets initial feedrate, used to calibrate initial conditions
+        """
         if self._units == 'mm':
             self._feed = feed/25.4
         elif self._units == 'in':
             self._feed = feed
         else:
             return "units not set"
+        self._logger.debug(f'set initial feedrate to {self._feed}')
 
     def _set_diameter(self, diameter):
         if self._units == 'mm':
@@ -82,3 +103,5 @@ class lathe_parting():
             self._dia = diameter
         else:
             return "units not set"
+        self._logger.debug(f'diameter set to {self._dia}')
+

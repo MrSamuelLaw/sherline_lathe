@@ -24,10 +24,14 @@ class sw_2_linuxCNC_formatter():
 
     def __init__(self):
         """
-        inits an instance of gscrape for gcode processing
-        and applies the appropriate comment flags
+        set gscrape comment flags
+
+        eof flags are also comments
         """
 
+        self._logger = logging.getLogger('log')
+
+        # set up gscrape
         self.g = gscrape()
         self.g.add_comment_flag('round', [('(', -1), (')', 1)])
         self.g.add_comment_flag('semicolon_left', [(';', 0)])
@@ -35,11 +39,10 @@ class sw_2_linuxCNC_formatter():
 
     def format(self, contents, units, offset):
         """
-        formats gcode from the text editor and
-        makes it compatible with linux cnc axis
-        controller for a sherline cnc lathe
+        formats gcode and ensures safety line is set
         """
 
+        self._logger.debug('formatting gcode')
         self.load_contents(contents)
         self.set_units(units)
         self.set_offset(offset)
@@ -54,46 +57,45 @@ class sw_2_linuxCNC_formatter():
 
     def remove_line_numbers(self):
         """
-        removes line numbers from the current
-        document using gscrape then reformats
-        as a string for text output
+        remove number lines in the for ->N1<- G20
         """
 
+        self._logger.debug('removing line numbers')
         self.remove_number_lines()
         return self.g.to_text(self._file_contents)
 
     def load_contents(self, contents):
         """
-        takes text from the CNC_TOOLBOX text_area
-        and applies gscrape formatting for easy parsing
-        and editing
+        converts raw text to sorted nested list using gscrape.py
         """
 
+        self._logger.debug('running gcode through gscrape')
         self._file_contents = self.g.sort_gcode(contents)
 
     def set_units(self, units):
         """
-        function call to set units for gcode file
+        set units to use for formatting
         """
+
         if units.lower() not in self._unit_dict.keys():
-            logging.debug("unit options are in or mm")
+            self._logger.debug("unit options are in or mm")
             return -1
         else:
             self._units = units.lower()
-            logging.debug("units set to {}".format(self._units))
+            self._logger.debug("units set to {}".format(self._units))
             return None
 
     def set_offset(self, offset="G54"):
         """
-        function to apply offset to gcode
-        defaults to G54
+        define appropriate offsets
         """
 
         if offset.upper() not in self._offset_list:
-            logging.info("offset is not valid")
+            self._logger.warning("offset is not valid")
             return -1
         else:
             self._offset = offset.upper()
+            self._logger.debug(f'offset set to {self._offset}')
             return None
 
     def _in_text(self, code, scraped_text):
@@ -105,6 +107,8 @@ class sw_2_linuxCNC_formatter():
         if any results are present.
         Will exclude comments
         """
+
+        self._logger.debug('searching using _in_text()')
         code = list(code)
         result = []
         for c in code:
@@ -121,6 +125,7 @@ class sw_2_linuxCNC_formatter():
         inserts a line of code at the specified line number
         """
 
+        self._logger.debug('inserting line using _insert_line()')
         # sort code to insert
         code = self.g.sort_gcode(code)
         # renumber code to insert
@@ -145,6 +150,7 @@ class sw_2_linuxCNC_formatter():
         are set at the beginning of the file
         """
 
+        self._logger.info('inserting safety line')
         # define the current safety line
         if self._units and self._offset is not None:
             safety_line = self._unit_dict[self._units]+' '
@@ -166,7 +172,7 @@ class sw_2_linuxCNC_formatter():
                 safety_line = safety_line.replace(self._work_plane, '')
             r = self._in_text([self._spindle_mode], self._file_contents)
             if len(r):
-                if r[0][0][2] < 10:  # make sure the G97 is before any motor commands
+                if r[0][0][2] < 10:  # make sure the G97 is before any motor cmds
                     safety_line = safety_line.replace(self._spindle_mode, '')
             # insert the appropriate safetly line on line 2
             self._insert_line(safety_line, 1)
@@ -179,6 +185,7 @@ class sw_2_linuxCNC_formatter():
         errors if they are present.
         """
 
+        self._logger.debug('deleting B commands')
         del_list = []
         for i, x in enumerate(self._file_contents):
             if x[1] == 'code' and 'B' in x[0]:
@@ -194,6 +201,7 @@ class sw_2_linuxCNC_formatter():
         for linux cnc
         """
 
+        self._logger.debug('fixing T (tool) commands')
         for i, x in enumerate(self._file_contents):
             if 'T' in x[0] and x[1] == 'code':
                 tool = list(x[0])
@@ -215,6 +223,7 @@ class sw_2_linuxCNC_formatter():
         for linux cnc
         """
 
+        self._logger.debug('fixing end of file formatting')
         for i, x in enumerate(self._file_contents):
             if x[1] == 'code' and x[0] in self._eof_list:
                 self._file_contents = self._file_contents[0:i+1]
@@ -227,6 +236,7 @@ class sw_2_linuxCNC_formatter():
         after edits are made
         """
 
+        self._logger.debug('renumbering lines')
         self.remove_number_lines()
         # load up each line
         line_dict = {}
@@ -256,6 +266,7 @@ class sw_2_linuxCNC_formatter():
         Takes out all N cmds from a gcode script
         """
 
+        self._logger.debug('removing number lines')
         # find which items need to be deleted
         del_list = []
         for i, x in enumerate(self._file_contents):
@@ -274,6 +285,7 @@ class sw_2_linuxCNC_formatter():
         by the code.
         """
 
+        self._logger.debug('fixing the spindle commands')
         # find the spindle commands
         for i, x in enumerate(self._file_contents):
             if x[1] == 'code' and 'S' in x[0]:
@@ -293,6 +305,7 @@ class sw_2_linuxCNC_formatter():
         warning at the top of the file.
         """
 
+        self._logger.info('inserting appropriate warnings')
         msg = '(MSG, warning G96 cmds not supported)'
         x = [x[0] for x in self._file_contents if x[1] == 'code']
         y = [x[0] for x in self._file_contents if x[1] == 'comment']
@@ -306,6 +319,7 @@ class sw_2_linuxCNC_formatter():
         in text format
         """
 
+        self._logger.debug('making tool table')
         tool_tbl = ''
         P = 1
         for x in self._file_contents:
@@ -327,5 +341,6 @@ class sw_2_linuxCNC_formatter():
         text
         """
 
+        self._logger('converting scraped gcode back to text')
         text = gscrape().to_text(self._file_contents)
         return text
