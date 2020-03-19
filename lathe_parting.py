@@ -28,8 +28,7 @@ class lathe_parting():
         """
         implement parting script
         """
-        self._
-        logger.info('generating parting script')
+        self._logger.info('generating parting script')
         self._set_units(unit)
         self._set_surface_speed(surface_speed),
         self._set_diameter(diameter)

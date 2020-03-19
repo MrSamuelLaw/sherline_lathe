@@ -341,6 +341,6 @@ class sw_2_linuxCNC_formatter():
         text
         """
 
-        self._logger('converting scraped gcode back to text')
+        self._logger.debug('converting scraped gcode back to text')
         text = gscrape().to_text(self._file_contents)
         return text

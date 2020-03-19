@@ -44,7 +44,6 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         self.setupUi(self.frame)
 
         # put functions here
-        self.text_area.appendPlainText(self.text_area.toPlainText())
         self.format_button.clicked.connect(self.format_file)
         self.surfacing_pushButton.clicked.connect(self.surface_script)
         self.parting_pushButton.clicked.connect(self.parting_script)
@@ -54,12 +53,18 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         # parent can keep it alive, otherwise it dies immediatly
         return self
 
+    def set_current_text_area(self):
+        self.text_area = self.tabWidget.currentWidget().text_area
+        # functions that have to carry over
+        self.text_area.appendPlainText(self.text_area.toPlainText())
+
     def format_file(self):
         """
         implement sw_to_linuxCNC_formatter
         """
 
         self._logger.info('formatting gcode to run on linuxCNC')
+        self.set_current_text_area()
         # definition is from the sw2linuxcnc module
         contents = self.text_area.toPlainText()
         offset = str(self.offset_field.text()).rstrip()
@@ -137,6 +142,7 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         """
 
         self._logger.info('generating tool table')
+        self.set_current_text_area()
         contents = self.text_area.toPlainText()
         formatter = sw_2_linuxCNC_formatter()
         formatter.load_contents(contents)
@@ -157,5 +163,6 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         """
 
         self._logger.debug('loading pointers to parent elements')
+        self.tabWidget = parent.tabWidget
         self.text_area = parent.text_area
         self.frame = parent.frame
