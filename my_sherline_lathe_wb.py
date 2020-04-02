@@ -36,12 +36,12 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
 
     def run_integrated(self, parent):
         """
-        load frame to run inside parent
+        load widget to run inside parent
         """
 
         self._logger.info('getting sherline lathe wb ready for parent')
         self.load_parent_elments(parent)
-        self.setupUi(self.frame)
+        self.setupUi(self.wb_widget)
 
         # put functions here
         self.format_button.clicked.connect(self.format_file)
@@ -159,10 +159,10 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
 
     def load_parent_elments(self, parent):
         """
-        get text_area and frame main window
+        get text_area and wb_widget from main window
         """
 
         self._logger.debug('loading pointers to parent elements')
         self.tabWidget = parent.tabWidget
         self.text_area = parent.text_area
-        self.frame = parent.frame
+        self.wb_widget = parent.wb_widget

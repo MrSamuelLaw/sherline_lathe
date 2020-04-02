@@ -34,8 +34,8 @@ class sw_2_linuxCNC_formatter():
         # set up gscrape
         self.g = gscrape()
         self.g.add_comment_flag('round', [('(', -1), (')', 1)])
-        self.g.add_comment_flag('semicolon_left', [(';', 0)])
-        self.g.add_comment_flag('eof', [('%', 0)])
+        self.g.add_comment_flag('semicolon_left', [(';', -2)])
+        self.g.add_comment_flag('eof', [('%', -2)])
 
     def format(self, contents, units, offset):
         """
@@ -126,22 +126,7 @@ class sw_2_linuxCNC_formatter():
         """
 
         self._logger.debug('inserting line using _insert_line()')
-        # sort code to insert
-        code = self.g.sort_gcode(code)
-        # renumber code to insert
-        for x in code:
-            x[2] = lnum
-        # renumber file contents
-        for x in self._file_contents:
-            if x[2] >= lnum:
-                x[2] += 1
-        # insert code
-        for i, x in enumerate(self._file_contents):
-            if x[2] < lnum:
-                pass
-            else:
-                self._file_contents[i:i] = code
-                break
+        self._file_contents = self.g.insert_line(self._file_contents, code, lnum)
 
     def insert_safety_line(self):
         """
@@ -175,7 +160,8 @@ class sw_2_linuxCNC_formatter():
                 if r[0][0][2] < 10:  # make sure the G97 is before any motor cmds
                     safety_line = safety_line.replace(self._spindle_mode, '')
             # insert the appropriate safetly line on line 2
-            self._insert_line(safety_line, 1)
+            if safety_line.strip():
+                self._insert_line(safety_line, 1)
 
     def delete_B_commands(self):
         """

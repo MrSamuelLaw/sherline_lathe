@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui',
-# licensing of 'C:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui' applies.
+# Form implementation generated from reading ui file 'c:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui',
+# licensing of 'c:\Users\Samuel\Documents\CodingProjects\Python\in_progress\CNC_TOOLBOX\CNC_TOOLBOX\wb\sherline_lathe\gui\surfacing_dialog.ui' applies.
 #
-# Created: Thu Mar 19 13:10:18 2020
+# Created: Thu Apr  2 12:38:31 2020
 #      by: pyside2-uic  running on PySide2 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
