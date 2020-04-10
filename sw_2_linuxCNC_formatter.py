@@ -51,7 +51,7 @@ class sw_2_linuxCNC_formatter():
         self.fix_spindle_cmds()
         self.fix_T_commands()
         self.fix_eof()
-        self.renumber_lines()
+        self.renumber_lines()  # this one is the problem
         self.insert_warnings()
         return self.get_text()
 
@@ -227,18 +227,21 @@ class sw_2_linuxCNC_formatter():
         # load up each line
         line_dict = {}
         oset = 0
+        # load up the line dict
         for x in self._file_contents:
             if x[2] not in line_dict.keys():
                 line_dict[x[2]] = [x]
             else:
                 line_dict[x[2]].append(x)
         self._file_contents.clear()
+        # load up file contents
         for i, k in enumerate(sorted(line_dict.keys())):
             if line_dict[k][0][0] == '%':
                 for x in line_dict[k]:
                     x[2] = i
                 self._file_contents.extend(line_dict[k])
                 break
+            # insert line number
             elif line_dict[k][0][1] != 'blank':
                 self._file_contents.append(['N{}'.format(i+1+oset), 'code', i])
             else:
@@ -328,5 +331,4 @@ class sw_2_linuxCNC_formatter():
         """
 
         self._logger.debug('converting scraped gcode back to text')
-        text = gscrape().to_text(self._file_contents)
-        return text
+        return self.g.to_text(self._file_contents)

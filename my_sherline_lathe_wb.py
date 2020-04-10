@@ -54,7 +54,9 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         return self
 
     def set_current_text_area(self):
-        self.text_area = self.tabWidget.currentWidget().text_area
+        # self.text_area = self.tabWidget.currentWidget().text_area
+
+        self.text_area = self.getCurrentItem()
         # functions that have to carry over
         self.text_area.appendPlainText(self.text_area.toPlainText())
 
@@ -163,6 +165,6 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         """
 
         self._logger.debug('loading pointers to parent elements')
-        self.tabWidget = parent.tabWidget
-        self.text_area = parent.text_area
+        # how to pass text
+        self.getCurrentItem = parent.getCurrentItem
         self.wb_widget = parent.wb_widget
