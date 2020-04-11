@@ -53,22 +53,15 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         # parent can keep it alive, otherwise it dies immediatly
         return self
 
-    def set_current_text_area(self):
-        # self.text_area = self.tabWidget.currentWidget().text_area
-
-        self.text_area = self.getCurrentItem()
-        # functions that have to carry over
-        self.text_area.appendPlainText(self.text_area.toPlainText())
-
     def format_file(self):
         """
         implement sw_to_linuxCNC_formatter
         """
 
         self._logger.info('formatting gcode to run on linuxCNC')
-        self.set_current_text_area()
+        self.plainTextEdit = self.get_current_plainTextEdit()
         # definition is from the sw2linuxcnc module
-        contents = self.text_area.toPlainText()
+        contents = self.plainTextEdit.toPlainText()
         offset = str(self.offset_field.text()).rstrip()
         if self.mm_radiobutton.isChecked():
             units = 'mm'
@@ -78,8 +71,14 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         contents = formatter.format(contents, units, offset)
         if not self.number_checkbox.isChecked():
             contents = formatter.remove_line_numbers()
-        self.text_area.clearText()
-        self.text_area.insertPlainText(contents.lstrip())
+        # start edit, where undo event will rervert to
+        self.plainTextEdit.textCursor().beginEditBlock()
+        # clear old text
+        self.plainTextEdit.clearText()
+        # insert formatted text
+        self.plainTextEdit.insertPlainText(contents.lstrip())
+        # end edit
+        self.plainTextEdit.textCursor().endEditBlock()
 
     def surface_script(self):
         """
@@ -108,7 +107,11 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
                 output = s.surface(unit, depth, length, rpm, feed)
             except Exception as e:
                 output = str(e)
-            pyperclip.copy(output)
+            # pyperclip.copy(output)
+            # open in a new tab
+            self.open()
+            self.plainTextEdit = self.get_current_plainTextEdit()
+            self.plainTextEdit.insertPlainText(output)
 
     def parting_script(self):
         """
@@ -136,7 +139,9 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
                 output = p.part(unit, speed, diameter, feed)
             except Exception as e:
                 output = str(e)
-            pyperclip.copy(output)
+            self.open()
+            self.plainTextEdit = self.get_current_plainTextEdit()
+            self.plainTextEdit.insertPlainText(output)
 
     def generate_tool_table(self, text):
         """
@@ -144,27 +149,24 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         """
 
         self._logger.info('generating tool table')
-        self.set_current_text_area()
-        contents = self.text_area.toPlainText()
+        self.plainTextEdit = self.get_current_plainTextEdit()
+        contents = self.plainTextEdit.toPlainText()
         formatter = sw_2_linuxCNC_formatter()
         formatter.load_contents(contents)
         crib = formatter.make_tool_tbl()
-        file_name = 'tool.tbl'
-       	browser = QFileDialog()
-        browser.setFileMode(QFileDialog.DirectoryOnly)
-        if browser.exec_():
-            folder = browser.selectedFiles()[0]
-            path = str(folder)+'/'+file_name
-            print(path)
-            with open(path, 'w') as f:
-                f.write(crib)
+        self.open()
+        self.plainTextEdit = self.get_current_plainTextEdit()
+        self.plainTextEdit.insertPlainText(crib)
 
     def load_parent_elments(self, parent):
         """
-        get text_area and wb_widget from main window
+        get plainTextEdit and wb_widget from main window
         """
 
         self._logger.debug('loading pointers to parent elements')
-        # how to pass text
-        self.getCurrentItem = parent.getCurrentItem
+        # to open in a new window
+        self.open = parent.open
+        # to edit existing documents
+        self.get_current_plainTextEdit = parent.get_current_plainTextEdit
+        # to put self into parents container
         self.wb_widget = parent.wb_widget
