@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-
-from sys import path
-path.append('../')
-from sherline_lathe.sw_2_linuxCNC_formatter import sw_2_linuxCNC_formatter
+from sw_2_linuxCNC_formatter import sw_2_linuxCNC_formatter
 import unittest
 
 
@@ -123,6 +120,3 @@ class test_sw_2_linuxCNC_formatter(unittest.TestCase):
         if 'T101' in res:
             self.assertTrue(True)
 
-
-if __name__ == "__main__":
-    unittest.main()
