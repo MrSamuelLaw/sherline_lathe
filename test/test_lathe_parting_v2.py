@@ -56,7 +56,7 @@ class test_LathePartingV2(unittest.TestCase):
         self.assertEqual(self.lp._feed, init_feed)
 
     def test_set_spi(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             self.lp.set_spi(30.1)
         self.lp.set_spi(30)
         self.assertEqual(self.lp.spi, 30)

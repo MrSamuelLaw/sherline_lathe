@@ -113,11 +113,13 @@ class LathePartingV2():
         """
         takes an integer number to define segments per inch
         """
-        if isinstance(spi, int):
-            self.spi = spi
+        # if isinstance(spi, int):
+        try:
+            # int(str(spi)) used to allow the function to handle float or string inputs
+            self.spi = int(str(spi))
             self.logger.debug(f'spi set to {spi}')
-        else:
-            raise TypeError("spi must be integer value")
+        except ValueError:
+            raise ValueError("spi must be integer value")
 
     def calibrate(self):
         """

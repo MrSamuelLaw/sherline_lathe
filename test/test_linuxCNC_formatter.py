@@ -162,4 +162,3 @@ class test_linuxCNCLatheFormatter(unittest.TestCase):
                         'in',
                         'G55'
                     )
-        print('\n'.join(self.lf.change_log))

@@ -8,13 +8,12 @@ and edits them to be compatible with linuxCNC
 
 import os.path
 import logging
-from gscrape import gscrape
+from gparse.rs_274 import rs274
 from math import floor
 from inspect import cleandoc
-from itertools import chain
 
 
-class linuxCNCLatheFormatter(gscrape):
+class linuxCNCLatheFormatter(rs274):
 
     _unit_dict = {"in": "G20", "mm": "G21"}
     _offset_list = ["G54", "G55", "G56", "G57", "G58", "G59"]
@@ -24,19 +23,13 @@ class linuxCNCLatheFormatter(gscrape):
 
     def __init__(self):
         """
-        set gscrape comment flags
-        eof flags are also comments
+        sets up logger
         """
 
         super(linuxCNCLatheFormatter, self).__init__()
 
         self.logger = logging.getLogger('log')
         self.change_log = []
-
-        # set up gscrape
-        self.add_comment_flag('round', [('(', -1), (')', 1)])
-        self.add_comment_flag('semicolon_left', [(';', -2)])
-        self.add_comment_flag('eof', [('%', -2)])
 
     def auto_format(self, text, units, offset):
 
@@ -45,7 +38,8 @@ class linuxCNCLatheFormatter(gscrape):
         self.set_units(units)
         self.set_offset(offset)
 
-        # run funcs that may find terminal gcode errors
+        # run funcs that may find critical errors
+        # note they are not caught so they continue up the ui level
         self.find_terminal_cmds()
         self.fix_B_cmds()
 
@@ -190,30 +184,30 @@ class linuxCNCLatheFormatter(gscrape):
         Removes B cmds if they are integer multiples of 90
         raises an error if they are not
         """
-        results = self.find_B_cmds()
-        self.log(f"attepmted to fix the following cmds:\n{results}")
-        for r in results:
-            num = float(r[0][1:])
+        B_cmds = self.find_B_cmds()
+        for B in B_cmds:
+            num = float(B[0][1:])
             if not num % 90.0:
                 # angle is a multiple of 90 deg
-                self.parsed_text.remove(r)
+                self.parsed_text.remove(B)
+                self.clog(f'removed: {B}')
             else:
                 # angle is not a multiple of 90
-                raise ValueError(f"B cmd on line {r[2]} not integer multiple of 90")
+                raise ValueError(f"B cmd on line {B[2]} not integer multiple of 90")
 
     def fix_T_cmds(self):
         """
         Removes decimals from T_cmds
         """
-        results = self.find_T_cmds()
-        self.log(f"attepmted to fix the following cmds:\n{results}")
-        for r in results:
+        T_cmds = self.find_T_cmds()
+        for T in T_cmds:
             # convert tool numbers to intergers as linuxCNC
             # cannot do floats
-            tool_num = float(r[0][1:])
+            tool_num = float(T[0][1:])
             tool_num = floor(tool_num)
             tool_code = f'T{tool_num}'
-            self.parsed_text[self.parsed_text.index(r)][0] = tool_code
+            self.parsed_text[self.parsed_text.index(T)][0] = tool_code
+            self.clog(f'changed tool number to int if needed: {T}')
 
     def fix_S_changes(self):
         """
@@ -223,7 +217,6 @@ class linuxCNCLatheFormatter(gscrape):
         prior to continuing.
         """
         S_cmds = self.find_S_cmds()
-        self.log(f"attepmted to fix the following cmds:\n{S_cmds}")
         for S in S_cmds:
             rpm = S[0][1:]
             spd_cmds = [
@@ -239,6 +232,8 @@ class linuxCNCLatheFormatter(gscrape):
                     ' '.join(spd_cmds),
                     (S[2] + 1)
                 )
+            self.clog(f'M0, (MSG, <text>) inserted after: {S}')
+
 
     def fix_T_changes(self):
         """
@@ -251,7 +246,6 @@ class linuxCNCLatheFormatter(gscrape):
         self.fix_T_cmds()  # fix T_cmds first
 
         T_cmds = self.find_T_cmds()
-        self.log(f"attepmted to fix the following cmds:\n{T_cmds}")
         change_cmds = [
             'M6',  # tool swap pause
             'G43'  # tool offset update
@@ -267,18 +261,19 @@ class linuxCNCLatheFormatter(gscrape):
                     ' '.join(change_cmds),
                     (T[2] + 1)
                 )
+            self.clog(f'M6, G43 inserted after: {T}')
 
     def fix_eof_cmds(self):
         """
         Ensures that code that will never be run is chopped
         off of the script
         """
-        result = self.find_eof_cmds()
-        self.log(f"attepmted to remove everythin past: {result[0]}")
-        if result:
+        eof_cmds = self.find_eof_cmds()
+        if eof_cmds:
             # remove everything past first eof cmd
-            i = self.parsed_text.index(result[0]) + 1
+            i = self.parsed_text.index(eof_cmds[0]) + 1
             del self.parsed_text[i:]
+            self.clog(f'deleted everything after: {eof_cmds[0]}')
             return
         raise AttributeError("no end of script cmds")
 
@@ -287,7 +282,6 @@ class linuxCNCLatheFormatter(gscrape):
         checks if the last character is a % symbol
         as required by linuxCNC, and if not, adds it
         """
-        self.log('ensuring that "%" sign at end of file')
         if hasattr(self, "parsed_text"):
             # delete trailing blank lines
             while not self.parsed_text[-1][0]:
@@ -295,11 +289,10 @@ class linuxCNCLatheFormatter(gscrape):
             # ensure correct eof symbol
             last_item = self.parsed_text[-1]
             if last_item[0] != "%":
-                self.parsed_text.append([
-                    '%',
-                    'comment',
-                    (last_item[2] + 1)
-                ])
+                self.parsed_text.append(
+                    ['%', 'code', (last_item[2] + 1)]
+                )
+            self.clog("'%' sign inserted at end of file")
         else:
             raise AttributeError("no attribute parsed_text")
 
@@ -315,9 +308,6 @@ class linuxCNCLatheFormatter(gscrape):
             self._work_plane,
             self._spindle_mode
         ]
-        self.log(
-            f"ensuring all of the following cmds are before any motor cmds:\n{safety_line}"
-        )
         # get line items are already in the script
         results = [x for x in self.parsed_text if (x[1] == 'code') and (x[0] in safety_line)]
 
@@ -338,6 +328,7 @@ class linuxCNCLatheFormatter(gscrape):
             ' '.join(safety_line),
             (lnum - 1)
         )
+        self.clog(f'cmds inserted before first motor cmd: {safety_line}')
 
     # ------------------------------------------------
     #   _    _          _
@@ -356,7 +347,7 @@ class linuxCNCLatheFormatter(gscrape):
                 """warning gcode already in memory...
                 must call clear() to parse new text"""
             )
-        self.parsed_text = self.sort_gcode(text)
+        self.parsed_text = self.parse_gcode(text)
 
     def clear(self):
         """
@@ -364,7 +355,7 @@ class linuxCNCLatheFormatter(gscrape):
         """
         del self.parsed_text
 
-    def log(self, msg):
+    def clog(self, msg):
         self.change_log.append(msg)
 
     def next_line(self, current_line: int):

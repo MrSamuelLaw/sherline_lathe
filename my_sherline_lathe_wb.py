@@ -92,6 +92,11 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
             self.plainTextEdit.clearText()
             self.plainTextEdit.insertPlainText(contents.lstrip())
             self.plainTextEdit.textCursor().endEditBlock()
+            # open a new tab for the change_log
+            self.open(title='changelog')
+            self.plainTextEdit = self.get_current_plainTextEdit()
+            self.plainTextEdit.insertPlainText("=====CHANGE LOG=====")
+            self.plainTextEdit.appendPlainText('\n'.join(formatter.change_log))
 
     def surface_script(self):
         """
@@ -169,10 +174,10 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
             try:
                 # get conditions
                 unit = form.unit_comboBox.currentText()
-                feed = float(form.feed_lineEdit.text())
-                speed = float(form.speed_lineEdit.text())
-                diameter = float(form.diameter_lineEdit.text())
-                spi = int(form.spi_lineEdit.text())
+                feed = form.feed_lineEdit.text()
+                speed = form.speed_lineEdit.text()
+                diameter = form.diameter_lineEdit.text()
+                spi = form.spi_lineEdit.text()
                 # set conditions
                 lp.set_units(unit)
                 lp.set_init_feed(feed)
@@ -183,18 +188,14 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
                 lp.calibrate()
 
             except ValueError as e:
-                # send error to log
-                self._logger.debug(e)
-                # create error msg for user
-                msg = cleandoc("""
-                invalid entry, options are:
-                feed: type = float or int
-                speed: type = float or int
-                diameter: type = float or int
-                spi: type = int
-                """)
                 # show message in error window
-                QMessageBox.critical(dialog, 'WARNING', msg)
+                QMessageBox.critical(
+                    dialog,
+                    'WARNING',
+                    str(e)
+                )
+            except Exception as e:
+                self._logger.debug(e)
 
             else:
                 # generate text results
