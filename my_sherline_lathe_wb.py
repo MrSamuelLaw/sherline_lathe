@@ -5,6 +5,10 @@ has leading spaces
 
 import pyperclip
 import logging
+from os.path import join, dirname
+from sys import argv
+from json import load
+
 
 from wb.sherline_lathe.gui.sherline_lathe_wb import *
 from wb.sherline_lathe.gui.surfacing_dialog import *
@@ -71,9 +75,12 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
 
         formatter = linuxCNCLatheFormatter()
         try:
-            contents = formatter.auto_format(contents, units, offset)
-            if not self.number_checkbox.isChecked():
-                contents = formatter.remove_N_cmds()
+            contents = formatter.auto_format(
+                contents,
+                units,
+                offset,
+                lnums=self.number_checkbox.isChecked()
+            )
         except (ValueError, AttributeError) as e:
             QMessageBox.critical(
                 None,
@@ -92,8 +99,9 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
             self.plainTextEdit.clearText()
             self.plainTextEdit.insertPlainText(contents.lstrip())
             self.plainTextEdit.textCursor().endEditBlock()
+
             # open a new tab for the change_log
-            self.open(title='changelog')
+            self.open()
             self.plainTextEdit = self.get_current_plainTextEdit()
             self.plainTextEdit.insertPlainText("=====CHANGE LOG=====")
             self.plainTextEdit.appendPlainText('\n'.join(formatter.change_log))
@@ -245,20 +253,41 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
                 """)
                 QMessageBox.critical(self.wb_widget, 'WARNING', msg)
 
-    def generate_tool_table(self, text):
+    def generate_tool_table(self):
         """
-        generate linuxCNC tool table from gcode
+        generates a linux cnc compatible tool
+        table file from the gcode and either opens a browser
+        or saves to predfined path in text format
         """
 
         self._logger.info('generating tool table')
-        self.plainTextEdit = self.get_current_plainTextEdit()
-        contents = self.plainTextEdit.toPlainText()
-        formatter = sw_2_linuxCNC_formatter()
-        formatter.load_contents(contents)
-        crib = formatter.make_tool_tbl()
-        self.open()
-        self.plainTextEdit = self.get_current_plainTextEdit()
-        self.plainTextEdit.insertPlainText(crib)
+        tool_tbl = []
+        tool_tbl_path = None
+        with open(join(dirname(__file__),'.config'), 'r') as in_file:
+            configs = load(in_file)
+            tool_tbl_path = configs['toolcrib_path']
+
+        gcode = self.get_current_plainTextEdit().toPlainText()
+        gcode = linuxCNCLatheFormatter().parse_gcode(gcode)
+
+        T_cmds = [x for x in gcode if x[1] == 'code' and x[0][0] == 'T']
+        # collect unique tools
+        tool_list = []
+        for T in T_cmds:
+            if T[0] not in tool_list:
+                tool_list.append(T[0])
+        # generate tool table text
+        tool_tbl = []
+        for i, T in enumerate(tool_list, start=1):
+            tool_tbl.append(f'{T} P{i} X+0.0 Z+0.0;')
+
+        if tool_tbl_path:
+            with open(tool_tbl_path, 'w') as outFile:
+                outFile.write('\n'.join(tool_tbl))
+        else:
+            self.open(title='tool_table')
+            self.plainTextEdit = self.get_current_plainTextEdit()
+            self.plainTextEdit.insertPlainText('\n'.join(tool_tbl))
 
     def load_parent_elments(self, parent):
         """
@@ -270,5 +299,6 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         self.open = parent.open
         # to edit existing documents
         self.get_current_plainTextEdit = parent.get_current_plainTextEdit
+        self.set_current_document_id = parent.set_current_document_id
         # to put self into parents container
         self.wb_widget = parent.wb_widget

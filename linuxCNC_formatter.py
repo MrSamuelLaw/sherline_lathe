@@ -8,12 +8,12 @@ and edits them to be compatible with linuxCNC
 
 import os.path
 import logging
-from gparse.rs_274 import rs274
+from gparse.rs_274_parser import rs274Parser
 from math import floor
 from inspect import cleandoc
 
 
-class linuxCNCLatheFormatter(rs274):
+class linuxCNCLatheFormatter(rs274Parser):
 
     _unit_dict = {"in": "G20", "mm": "G21"}
     _offset_list = ["G54", "G55", "G56", "G57", "G58", "G59"]
@@ -31,7 +31,7 @@ class linuxCNCLatheFormatter(rs274):
         self.logger = logging.getLogger('log')
         self.change_log = []
 
-    def auto_format(self, text, units, offset):
+    def auto_format(self, text, units, offset, lnums=True):
 
         # setup
         self.parse_text(text)
@@ -45,11 +45,12 @@ class linuxCNCLatheFormatter(rs274):
 
         # run the rest of the formatting funcs
         self.fix_S_changes()
+        self.fix_safety_line()
         self.fix_T_changes()
         self.fix_eof_cmds()
-        self.fix_safety_line()
         self.remove_N_cmds()
-        self.insert_N_cmds()
+        if lnums:
+            self.insert_N_cmds()
         self.fix_eof_symbols()
         return self.to_text(self.parsed_text)
 
@@ -63,6 +64,7 @@ class linuxCNCLatheFormatter(rs274):
     # ------------------------------------------------
 
     def set_units(self, units: str) -> None:
+        """set the units with either in or mm"""
         if hasattr(self, 'units'):
             raise AttributeError("error, units already set...")
         try:
@@ -73,6 +75,7 @@ class linuxCNCLatheFormatter(rs274):
             )
 
     def set_offset(self, offset: str = 'G54') -> None:
+        """set the offset, defaults to G54"""
         if hasattr(self, 'offset'):
             raise AttributeError("error, offset already set...")
         if offset in self._offset_list:
@@ -94,6 +97,7 @@ class linuxCNCLatheFormatter(rs274):
     # -------------------------------------------------
 
     def find_terminal_cmds(self):
+        """finds any cmds that the lathe does not support"""
         # list of cmds the lathe cannot handle
         terminal_cmds = [
             'G96'
@@ -223,7 +227,10 @@ class linuxCNCLatheFormatter(rs274):
                 "M0",
                 f"(MSG, please set rpm to {rpm})"
             ]
-            next_line = self.next_line(S[2])
+            try:
+                next_line = self.next_line(S[2])
+            except IndexError:
+                next_line = []  # there is no next line
             # check if T_swaps and T_offsets are in next line
             if not all(cmd in [x[0] for x in next_line] for cmd in spd_cmds):
                 # insert change_cmds if not found
@@ -232,8 +239,7 @@ class linuxCNCLatheFormatter(rs274):
                     ' '.join(spd_cmds),
                     (S[2] + 1)
                 )
-            self.clog(f'M0, (MSG, <text>) inserted after: {S}')
-
+                self.clog(f'M0, (MSG, <text>) inserted after: {S}')
 
     def fix_T_changes(self):
         """
@@ -261,7 +267,7 @@ class linuxCNCLatheFormatter(rs274):
                     ' '.join(change_cmds),
                     (T[2] + 1)
                 )
-            self.clog(f'M6, G43 inserted after: {T}')
+                self.clog(f'M6, G43 inserted after: {T}')
 
     def fix_eof_cmds(self):
         """
@@ -312,9 +318,12 @@ class linuxCNCLatheFormatter(rs274):
         results = [x for x in self.parsed_text if (x[1] == 'code') and (x[0] in safety_line)]
 
         # get first S cmd index
-        first_S_index = self.parsed_text.index(
-            self.find_S_cmds()[0]
-        )
+        try:
+            first_S_index = self.parsed_text.index(
+                self.find_S_cmds()[0]
+            )
+        except IndexError:
+            raise ValueError("No S cmds found, please specify at least one spindle speed")
 
         # prevent unneccessary duplicates
         for r in results:
@@ -322,13 +331,14 @@ class linuxCNCLatheFormatter(rs274):
                 del safety_line[safety_line.index(r[0])]
 
         # insert safety line
-        lnum = self.parsed_text[first_S_index][2]
-        self.insert_line(
-            self.parsed_text,
-            ' '.join(safety_line),
-            (lnum - 1)
-        )
-        self.clog(f'cmds inserted before first motor cmd: {safety_line}')
+        if safety_line:
+            lnum = self.parsed_text[first_S_index][2]
+            self.insert_line(
+                self.parsed_text,
+                ' '.join(safety_line),
+                (lnum - 1)
+            )
+            self.clog(f'cmds inserted before first motor cmd: {safety_line}')
 
     # ------------------------------------------------
     #   _    _          _
@@ -424,7 +434,7 @@ class linuxCNCLatheFormatter(rs274):
                     elif "%" not in x[0]:  # if not blank/eof insert N cmd
                         self.parsed_text.insert(
                             self.parsed_text.index(x),
-                            [f'N{lnum-offset}', 'code', lnum]
+                            [f'N{lnum-offset+1}', 'code', lnum]
                         )
                     lnum += 1
         else:
