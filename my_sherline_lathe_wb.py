@@ -96,7 +96,7 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         else:
             # start edit block, so text document views as single action
             self.plainTextEdit.textCursor().beginEditBlock()
-            self.plainTextEdit.clearText()
+            self.plainTextEdit.clearText(self.plainTextEdit)
             self.plainTextEdit.insertPlainText(contents.lstrip())
             self.plainTextEdit.textCursor().endEditBlock()
 
@@ -263,8 +263,8 @@ class my_sherline_lathe_wb(Ui_sherline_lathe_workbench):
         self._logger.info('generating tool table')
         tool_tbl = []
         tool_tbl_path = None
-        with open(join(dirname(__file__),'.config'), 'r') as in_file:
-            configs = load(in_file)
+        with open(join(dirname(__file__),'.config'), 'r') as inFile:
+            configs = load(inFile)
             tool_tbl_path = configs['toolcrib_path']
 
         gcode = self.get_current_plainTextEdit().toPlainText()

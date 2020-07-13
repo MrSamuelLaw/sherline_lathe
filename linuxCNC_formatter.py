@@ -1,5 +1,15 @@
 #!/bin/usr/env python
 
+# ==========================
+# Author: Samuel Law
+# Bugs:
+#   The tool number, and change functions are too strict
+#   Examples:
+#       T002->T2 not necessary
+#       (MSG, ...) -> (MSG, duplicate)
+#       M6 G43 -> M6 G43 duplicate
+# ==========================
+
 '''
 python class that reads in user's nc files from solidworks cam
 and edits them to be compatible with linuxCNC
