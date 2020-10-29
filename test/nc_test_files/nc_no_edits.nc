@@ -3,7 +3,7 @@ G20
 B90.
 N1 (Sherline E 1/4")
 N2 T0101
-N3 G00 G96 S503 M04
+N3 G00 G97 S503 M04
 
 N4 ( Face Rough1 )
 N5 G00 Z.2076 M08
@@ -67,7 +67,7 @@ N60 M01
 N61 (Sherline_Boring_Bar_Assembly)
 N62 T0303.0
 N63 B0
-N64 G00 G96 S147 M03
+N64 G00 G97 S147 M03
 
 N65 ( Bore Finish1 )
 N66 G00 Z.2325 M08

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-from sys import path
-path.append('../')
-from sherline_lathe.lathe_surfacing import lathe_surfacing
+from lathe_surfacing import lathe_surfacing
 import unittest
 
 
